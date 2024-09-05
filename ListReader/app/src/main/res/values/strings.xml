@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ListReader</string>
+    <string name="empty_map">This map is empty</string>
+    <string name="gen_error">An error occurred</string>
+</resources>
