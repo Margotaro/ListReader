@@ -12,33 +12,32 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface ListState { // reason to refactor: type safety
+    data object Loading : ListState
+    data class Success(val items: Map<Int, List<Item>>) : ListState
+    data class Error(val message: String) : ListState
+}
+
 @HiltViewModel
 class ListViewModel @Inject constructor(private val repository: RemoteListRepository) : ViewModel() {
-    var itemMap by mutableStateOf<Map<Int, List<Item>>>(emptyMap())
-        private set
 
-    var isLoading by mutableStateOf(true)
-        private set
-
-    var error by mutableStateOf<String?>(null)
-        private set
+    private val _state = mutableStateOf<ListState>(ListState.Loading)
+    val state: ListState get() = _state.value
 
     init {
         fetchItems()
     }
 
     private fun fetchItems() {
-        error = null
+        _state.value = ListState.Loading
         viewModelScope.launch {
-            try {
-                isLoading = true
+            _state.value = try {
                 val parsedItems = repository.getList()
                 val filteredItems = filterItems(parsedItems)
-                itemMap = listToSortedMap(filteredItems)
+                val sortedItems = listToSortedMap(filteredItems)
+                ListState.Success(sortedItems)
             } catch (e: Exception) {
-                error = e.message
-            } finally {
-                isLoading = false
+                ListState.Error(e.message ?: "Unknown error")
             }
         }
     }

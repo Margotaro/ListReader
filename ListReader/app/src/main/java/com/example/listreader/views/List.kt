@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,13 +23,15 @@ import com.example.listreader.util.network.Item
 import com.example.listreader.ui.theme.ListReaderTheme
 import com.example.listreader.util.MockListRepository
 import com.example.listreader.viewmodels.ListViewModel
+import com.example.listreader.viewmodels.ListState
+
 
 @Preview(showBackground = true)
 @Composable
 fun ListPreview() {
     ListReaderTheme {
         GroupedList(map = MockListRepository.mockItemList
-            .filter { it.name != "" && it.name != null }
+            .filter { !it.name.isNullOrEmpty() } //reason to refactor: easier to read
             .mapNotNull { it.name?.let { name ->
                 Item(
                     id = it.id,
@@ -45,18 +46,17 @@ fun ListPreview() {
 
 @Composable
 fun FetchValues(viewModel: ListViewModel = hiltViewModel()) {
-    val items = viewModel.itemMap
-    val isLoading = viewModel.isLoading
-    val error = viewModel.error
-
-    if (isLoading) {
-        ProgressIndicator()
-    } else if (error != null){
-        ShowError()
-    } else if (items.isEmpty()) {
-        EmptyMap()
-    } else {
-        GroupedList(items)
+    when (val state = viewModel.state) {
+        is ListState.Loading -> ProgressIndicator()
+        is ListState.Success -> {
+            val items = state.items
+            if (items.isEmpty()) {
+                EmptyMap()
+            } else {
+                GroupedList(items)
+            }
+        }
+        is ListState.Error -> ShowError(state.message)
     }
 }
 

@@ -12,8 +12,7 @@ class RemoteListRepository @Inject constructor(
         val response = apiService.getItems()
         if (response.isSuccessful) {
             return response.body() ?: emptyList()
-        } else {
-            Log.e("API_ERROR", "Error: ${response.code()} ${response.message()}")
+        } else { // refactor reason: added okhttp logging interceptor
             throw Exception("Error: ${response.code()} ${response.message()}")
         }
     }
